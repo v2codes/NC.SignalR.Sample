@@ -1,4 +1,4 @@
-import React, { useState, useEffect,useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Input, Button, Divider } from 'antd';
 import { Link } from 'umi';
 import Links from './Steps/Links';
@@ -17,7 +17,7 @@ export default () => {
     receiveMessage: '',
   });
   const stateRef = useRef<any>();
-  stateRef.current=state;
+  stateRef.current = state;
 
   useEffect(() => {
     // 配置连接

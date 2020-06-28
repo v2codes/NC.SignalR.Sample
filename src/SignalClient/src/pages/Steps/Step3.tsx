@@ -19,7 +19,9 @@ export default () => {
   useEffect(() => {
     console.log('step3  signalRConnection:', window.SignalRConnection);
     // 接收消息处理
-    window.SignalRConnection.on('ReceiveMessage', onReceiveMessage);
+    if (window.SignalRConnection) {
+      window.SignalRConnection.on('ReceiveMessage', onReceiveMessage);
+    }
   }, []);
 
   // 接收消息处理

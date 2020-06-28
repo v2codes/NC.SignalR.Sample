@@ -1,4 +1,4 @@
-import React, { useState, useEffect,useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Input, Button, Divider } from 'antd';
 import { Link } from 'umi';
 import Links from './Links';
@@ -11,15 +11,17 @@ export default () => {
     connected,
     user: 'Teacher',
     message: 'step1',
-    receiveMessage:'',
+    receiveMessage: '',
   });
   const stateRef = useRef<any>();
-  stateRef.current=state;
+  stateRef.current = state;
 
   useEffect(() => {
     console.log('step1  signalRConnection:', window.SignalRConnection);
     // 接收消息处理
-    window.SignalRConnection.on('ReceiveMessage', onReceiveMessage);
+    if (window.SignalRConnection) {
+      window.SignalRConnection.on('ReceiveMessage', onReceiveMessage);
+    }
   }, []);
 
   // 接收消息处理
