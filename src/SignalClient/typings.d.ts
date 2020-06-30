@@ -11,6 +11,7 @@ declare module '*.svg' {
 
 declare global {
   interface Window {
+    signalRServerUrl: string | undefined;
     SignalRConnection: HubConnection | undefined;
   }
 }
