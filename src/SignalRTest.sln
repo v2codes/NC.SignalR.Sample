@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.30204.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalRTest", "SignalRTest\SignalRTest.csproj", "{A57A4AB6-96E0-4781-BB69-FE19EDE1AA87}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalRServer", "SignalRServer\SignalRServer.csproj", "{2F714060-D9FD-40C9-8D81-1CD7CFECB604}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalRServer", "SignalRServer\SignalRServer.csproj", "{2F714060-D9FD-40C9-8D81-1CD7CFECB604}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalRBenchmark", "SignalRBenchmark\SignalRBenchmark.csproj", "{92022141-AD9D-475C-927B-FF83EB30F285}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{2F714060-D9FD-40C9-8D81-1CD7CFECB604}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2F714060-D9FD-40C9-8D81-1CD7CFECB604}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2F714060-D9FD-40C9-8D81-1CD7CFECB604}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92022141-AD9D-475C-927B-FF83EB30F285}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92022141-AD9D-475C-927B-FF83EB30F285}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92022141-AD9D-475C-927B-FF83EB30F285}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92022141-AD9D-475C-927B-FF83EB30F285}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
