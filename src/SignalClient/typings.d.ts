@@ -1,4 +1,5 @@
 import { HubConnection } from '@microsoft/signalr';
+import { SignalRClientBuilder } from '@/signalr';
 
 declare module '*.less';
 declare module '*.css';
@@ -13,6 +14,11 @@ declare global {
   interface Window {
     signalRServerUrl: string | undefined;
     SignalRConnection: HubConnection | undefined;
+
+    /**
+     * 全局 SignalR 客户端对象
+     */
+    SignalRClient: SignalRClientBuilder | undefined;
   }
 }
 export { }
