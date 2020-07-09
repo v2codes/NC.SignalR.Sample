@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -44,12 +45,12 @@ namespace SignalRServer.Models
         /// <summary>
         /// 发送时间
         /// </summary>
-        public DateTime? SendTime { get; set; }
+        public DateTime SendTime { get; set; }
 
         /// <summary>
         /// 反馈状态
         /// </summary>
-        public bool? State { get; set; }
+        public bool State { get; set; }
 
         /// <summary>
         /// 消息反馈时间
@@ -61,6 +62,11 @@ namespace SignalRServer.Models
             this.MessageId = Guid.NewGuid();
             this.SendTime = DateTime.Now;
             this.State = false;
+        }
+
+        public string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
         }
     }
 
@@ -77,7 +83,7 @@ namespace SignalRServer.Models
         /// <summary>
         /// 状态
         /// </summary>
-        public bool? State { get; set; }
+        public bool State { get; set; }
 
         /// <summary>
         /// 消息反馈时间

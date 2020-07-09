@@ -5,7 +5,6 @@ import { HubConnection, HubConnectionBuilder, HttpTransportType } from '@microso
 import getSignalRClient, { SignalRClientBuilder, CommandType } from '@/signalr';
 import styles from './index.less';
 
-//
 const TeacherCode = 'Teacher001';
 
 export default () => {
@@ -23,9 +22,9 @@ export default () => {
 
       // 接收消息回调
       client.onReceived(onReceive);
-
+      
       // 注册客户端 - 教师机
-      await client.registerTeacher({ code: TeacherCode, data: `教师 ${TeacherCode} 注册客户端` });
+      await client.registerTeacher(TeacherCode, `教师 ${TeacherCode} 注册客户端` );
 
       // save state
       // setSignalRClient(client);
@@ -70,7 +69,7 @@ export default () => {
     <div>
       <h1 className={window.SignalRClient?.isConnected() ? styles.title : styles.titleWarn}>Index</h1>
       <div style={{ textAlign: 'center', marginTop: '100px', margin: '0 auto' }}>
-        <div>User:Teacher, Message:001</div>
+        <div>Identity:Teacher, Code:{TeacherCode}</div>
         <div style={{ textAlign: 'center', margin: '20px' }}>
           <Button
             type="primary"

@@ -45,14 +45,9 @@ export interface ISignalRClientOptions {
  */
 export enum EventType {
     /**
-     * 注册教师机
+     * 注册教师机 & 学生机
      */
-    RegisterTeacher = 'RegisterTeacher',
-
-    /**
-     * 注册学生机
-     */
-    RegisterStudent = 'RegisterStudent',
+    Register = 'Register',
 
     /**
      * 注册成功通知消息类型
@@ -67,7 +62,12 @@ export enum EventType {
     /**
      * 发送消息类型
      */
-    SendMessage = 'SendMessage'
+    SendMessage = 'SendMessage',
+
+    /**
+     * 开始考试消息类型
+     */
+    Start = 'Start'
 }
 
 /**
@@ -83,7 +83,7 @@ export enum CommandType {
     /**
      * 学生机加入
      */
-    StudentRegister = 'StudentRegister',
+    StudentConnected = 'StudentConnected',
 
     /**
      * 开始考试
@@ -114,6 +114,9 @@ export class SignalRClientBuilder {
 
     // 接受消息回调
     private onReceivedMessage?: (commandType: CommandType, ...args: any[]) => void;
+
+    // 接受消息回调
+    private onStart?: (commandType: CommandType, ...args: any[]) => void;
 
 
     constructor(options?: ISignalRClientOptions) {
@@ -150,9 +153,15 @@ export class SignalRClientBuilder {
 
         // 接收消息处理
         builder.on(EventType.ReceiveMessage, (commandType: CommandType, ...args: any[]): void => {
-            console.log('this.onReceivedMessage', this.onReceivedMessage)
             if (this.onReceivedMessage) {
                 this.onReceivedMessage(commandType, ...args);
+            }
+        });
+
+        // 开始考试
+        builder.on(EventType.Start, (commandType: CommandType, ...args: any[]): void => {
+            if (this.onStart) {
+                this.onStart(commandType, ...args);
             }
         });
 
@@ -160,22 +169,32 @@ export class SignalRClientBuilder {
     }
 
     /**
-     * 注册客户端（教师机|学生机）
-     * @param code 
+     * 注册客户端（教师机）
+     * @param identityType 
      * @param data 
      */
-    public registerTeacher = async (...args: any[]): Promise<void> => {
-        await this.send(EventType.RegisterTeacher, ...args);
+    public registerTeacher = async (code: string, data: any): Promise<void> => {
+        const regInfo = {
+            identity: IdentityType.Teacher,
+            code,
+            data
+        }
+        await this.send(EventType.Register, regInfo);
     }
 
     /**
-     * 注册客户端（教师机|学生机）
+     * 注册客户端（学生机）
      * @param code 
      * @param data - 包含 teacherCode 等信息在内 
      */
-    public registerStudent = async (data: any): Promise<void> => {
-        const teacherCode = data && data.teacherCode || 'Teacher001';
-        await this.send(EventType.RegisterStudent, { ...data, teacherCode });
+    public registerStudent = async (code: string, teacherCode: string, data: any): Promise<void> => {
+        const regInfo = {
+            identity: IdentityType.Student,
+            teacherCode: teacherCode,
+            code,
+            data
+        }
+        await this.send(EventType.Register, regInfo);
     }
 
     /**
@@ -194,13 +213,24 @@ export class SignalRClientBuilder {
         this.onReceivedMessage = callback;
     }
 
+    // 接收消息处理
+    public on = (methodName: string, callback: (commandType: CommandType, ...args: any[]) => void) => {
+        this.client.on(methodName, callback);
+    }
+
+    public onStarted = (callback: (commandType: CommandType, ...args: any[]) => void): void => {
+        this.onStart = callback;
+    }
+    
+
     /**
      * 发送 SendMessage 类型消息
      * @param args 
      */
     public sendMessage = async (commandType: CommandType, ...args: any[]): Promise<void> => {
         if (this.isConnected()) {
-            await this.client.send(EventType.SendMessage, commandType, ...args);
+            await this.client.send(commandType, ...args);
+            // await this.client.send(EventType.SendMessage, commandType, ...args);
         } else {
             console.log('signalr init failed or disconnected.');
         }

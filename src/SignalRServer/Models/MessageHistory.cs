@@ -12,7 +12,6 @@ namespace SignalRServer.Models
     /// </summary>
     public class MessageHistory
     {
-
         /// <summary>
         /// 消息记录
         /// </summary>

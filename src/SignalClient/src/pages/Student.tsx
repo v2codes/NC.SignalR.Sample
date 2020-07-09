@@ -6,7 +6,7 @@ import getSignalRClient, { SignalRClientBuilder, CommandType } from '@/signalr';
 import styles from './index.less';
 
 const TeacherCode = 'Teacher001';
-
+const StudentCode = uuidv4();
 export default () => {
   // const [signalRClient, setSignalRClient] = useState<SignalRClientBuilder>();
 
@@ -23,9 +23,14 @@ export default () => {
       // 接收消息回调
       client.onReceived(onReceive);
 
+      client.onStarted(onStart);
+
       // 注册客户端
-      var studentCode = uuidv4();
-      await client.registerStudent({ code: studentCode, TeacherCode, data: `学生机 ${studentCode} 注册` });
+      await client.registerStudent(StudentCode, TeacherCode, `学生机 ${StudentCode} 注册`);
+
+      // (commandTyupe, data) => {
+      //   alert('Start: TeacherCode = ' + data);
+      // });
 
       // save state
       // setSignalRClient(client);
@@ -56,6 +61,18 @@ export default () => {
     [receiveMessages],
   );
 
+    // 收到消息
+    const onStart = useCallback(
+      (commandType: CommandType, data: any) => {
+        receiveMessages.push({
+          eventCommand: commandType,
+          data: JSON.stringify(data),
+        });
+        setReceiveMessages([...receiveMessages]);
+      },
+      [receiveMessages],
+    );
+
   // 发送按钮事件
   const onBtnSendClick = async (): Promise<void> => {
     await window.SignalRClient?.sendMessage('Student', 'Teacher001');
@@ -65,7 +82,7 @@ export default () => {
     <div>
       <h1 className={window.SignalRClient?.isConnected() ? styles.title : styles.titleWarn}>Index</h1>
       <div style={{ textAlign: 'center', marginTop: '100px', margin: '0 auto' }}>
-        <div>User:Student, Message:001</div>
+        <div>Identity:Student, Code:{StudentCode}</div>
         <div style={{ textAlign: 'center', margin: '20px' }}>
           <Button
             type="primary"
