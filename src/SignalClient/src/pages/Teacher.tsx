@@ -1,34 +1,38 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Input, Button, Divider } from 'antd';
 import { Link } from 'umi';
-import { HubConnection, HubConnectionBuilder, HttpTransportType } from '@microsoft/signalr';
-import getSignalRClient, { SignalRClientBuilder, CommandType } from '@/signalr';
+import { getSignalRClient, CommandType } from '@/signalr';
 import styles from './index.less';
 
 const TeacherCode = 'Teacher001';
 
 export default () => {
-
   // const [signalRClient, setSignalRClient] = useState<SignalRClientBuilder>();
   const [receiveMessages, setReceiveMessages] = useState<Array<any>>([]);
 
   useEffect(() => {
-    (async () => {
-      // 初始化客户端
-      const client = await getSignalRClient();
+    // 初始化客户端
+    const client = getSignalRClient({ serverAddress: '' });
 
-      // 注册成功回调通知
-      client.onRegisted(onRegisterSuccess);
+    // 注册成功回调通知
+    client.onRegisted(onRegisterSuccess);
 
-      // 接收消息回调
-      client.onReceived(onReceive);
-      
-      // 注册客户端 - 教师机
-      await client.registerTeacher(TeacherCode, `教师 ${TeacherCode} 注册客户端` );
+    // 接收消息回调
+    client.onReceived(onReceive);
 
-      // save state
-      // setSignalRClient(client);
-    })();
+    client
+      .connect()
+      .then(() => {
+        // 注册客户端 - 教师机
+        client.registerTeacher(TeacherCode, `教师 ${TeacherCode} 注册客户端`);
+      })
+      .catch(e => {
+        alert(e);
+      });
+
+    client.onClose(err => {
+      console.log('err', err);
+    });
   }, []);
 
   // 收到消息
@@ -67,8 +71,9 @@ export default () => {
 
   return (
     <div>
-      <h1 className={window.SignalRClient?.isConnected() ? styles.title : styles.titleWarn}>Index</h1>
+      <h1 className={window.SignalRClient?.isConnected() ? styles.title : styles.titleWarn}>Teacher</h1>
       <div style={{ textAlign: 'center', marginTop: '100px', margin: '0 auto' }}>
+        <Link to="/teacher2">Teacher2</Link>
         <div>Identity:Teacher, Code:{TeacherCode}</div>
         <div style={{ textAlign: 'center', margin: '20px' }}>
           <Button

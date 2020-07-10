@@ -1,5 +1,5 @@
 import { HubConnection } from '@microsoft/signalr';
-import { SignalRClientBuilder } from '@/signalr';
+import { SignalRClientBuilder } from '@/signalr/signalRClientBuilder';
 
 declare module '*.less';
 declare module '*.css';

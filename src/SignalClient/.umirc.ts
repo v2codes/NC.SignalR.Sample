@@ -7,6 +7,7 @@ export default defineConfig({
   layout: {},
   routes: [
     { path: '/', component: '@/pages/teacher' },
+    { path: '/teacher2', component: '@/pages/teacher2' },
     // { path: '/student/:code', component: '@/pages/student' },
     { path: '/student', component: '@/pages/student' },
     { path: '/step1', component: '@/pages/Steps/step1' },

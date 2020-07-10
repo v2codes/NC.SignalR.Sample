@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from 'antd';
 // import { Link, useParams } from 'umi';
 import { v4 as uuidv4 } from 'uuid';
-import getSignalRClient, { SignalRClientBuilder, CommandType } from '@/signalr';
+import { getSignalRClient, CommandType } from '@/signalr';
 import styles from './index.less';
 
 const TeacherCode = 'Teacher001';
@@ -15,7 +15,7 @@ export default () => {
   useEffect(() => {
     (async () => {
       // 初始化客户端
-      const client = await getSignalRClient();
+      const client = getSignalRClient();
 
       // 注册成功回调通知
       client.onRegisted(onRegisterSuccess);
@@ -23,17 +23,17 @@ export default () => {
       // 接收消息回调
       client.onReceived(onReceive);
 
-      client.onStarted(onStart);
+      // client.onStarted(onStart);
 
-      // 注册客户端
-      await client.registerStudent(StudentCode, TeacherCode, `学生机 ${StudentCode} 注册`);
-
-      // (commandTyupe, data) => {
-      //   alert('Start: TeacherCode = ' + data);
-      // });
-
-      // save state
-      // setSignalRClient(client);
+      client
+        .connect()
+        .then(() => {
+          // 注册客户端 - 学生机
+          client.registerStudent(StudentCode, TeacherCode, `学生机 ${StudentCode} 注册`);
+        })
+        .catch(e => {
+          alert(e);
+        });
     })();
   }, []);
 
@@ -61,17 +61,17 @@ export default () => {
     [receiveMessages],
   );
 
-    // 收到消息
-    const onStart = useCallback(
-      (commandType: CommandType, data: any) => {
-        receiveMessages.push({
-          eventCommand: commandType,
-          data: JSON.stringify(data),
-        });
-        setReceiveMessages([...receiveMessages]);
-      },
-      [receiveMessages],
-    );
+  // 收到消息
+  const onStart = useCallback(
+    (commandType: CommandType, data: any) => {
+      receiveMessages.push({
+        eventCommand: commandType,
+        data: JSON.stringify(data),
+      });
+      setReceiveMessages([...receiveMessages]);
+    },
+    [receiveMessages],
+  );
 
   // 发送按钮事件
   const onBtnSendClick = async (): Promise<void> => {
