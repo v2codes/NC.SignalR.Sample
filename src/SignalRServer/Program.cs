@@ -18,6 +18,11 @@ namespace SignalRServer
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureLogging(loggerFactory =>
+                {
+                    loggerFactory.AddConsole().AddFilter("Microsoft", LogLevel.Warning);
+                })
+
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();

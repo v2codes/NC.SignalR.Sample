@@ -18,6 +18,7 @@ namespace SignalRServer.Hubs
         /// <returns></returns>
         public async Task Start(string teacherCode)
         {
+            _counter.Receive(teacherCode);
             await Clients.Group(teacherCode).SendAsync(EventType.Start,CommandType.Start, teacherCode);
         }
 

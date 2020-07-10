@@ -43,11 +43,13 @@ namespace SignalRBenchmark
                 //signalrBuilder.AddStackExchangeRedis(redisConnectionString);
             }
 
+
             services.AddSingleton<ConnectionCounter>();
 
-            //services.AddHostedService<HostedCounterService>();
+            services.AddHostedService<HostedCounterService>();
 
             services.AddControllers();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

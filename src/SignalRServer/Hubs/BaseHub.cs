@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Models;
 using SignalRServer.Dtos;
+using SignalRServer.Benchmark;
 
 namespace SignalRServer.Hubs
 {
@@ -16,10 +17,17 @@ namespace SignalRServer.Hubs
     /// </summary>
     public partial class ChatHub : Hub
     {
+        private readonly ConnectionCounter _counter;
+
         static ChatHub()
         {
-            MonitorConnections();
+            //MonitorConnections();
             MonitorFeedback();
+        }
+
+        public ChatHub(ConnectionCounter counter)
+        {
+            _counter = counter;
         }
 
         /// <summary>
@@ -107,6 +115,8 @@ namespace SignalRServer.Hubs
         /// <returns></returns>
         public override Task OnConnectedAsync()
         {
+            _counter.Connected();
+
             // TODO，连接成功后，注册之前，要不要处理？？
             //Storage.UpdateConnectedState(Context.ConnectionId, true);
             return base.OnConnectedAsync();
@@ -119,8 +129,15 @@ namespace SignalRServer.Hubs
         /// <returns></returns>
         public override Task OnDisconnectedAsync(Exception exception)
         {
+            _counter.Disconnected();
+
             Storage.UpdateConnectedState(Context.ConnectionId, false);
             return base.OnDisconnectedAsync(exception);
+        }
+
+        public void SendPayload(string payload)
+        {
+            _counter.Receive(payload);
         }
 
         /// <summary>
