@@ -98,7 +98,7 @@ namespace SignalRServer
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapHub<ChatHub>("/hubs/chathub");
+                endpoints.MapHub<ChatHub>("/signalr");
                 endpoints.MapControllers();
             });
         }
