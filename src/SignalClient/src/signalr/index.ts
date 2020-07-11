@@ -1,2 +1,3 @@
-export { IdentityType, EventType, CommandType } from './signalRClientBuilder';
-export { getSignalRClient, SignalRClientBuilder, ISignalRClientOptions } from './signalRClientBuilder';
+export { IdentityType, EventType, CommandType } from './commands';
+export { ISignalRClientOptions } from './ISignalRClientOptions';
+export { getSignalRClient, SignalRClientBuilder } from './signalRClientBuilder';

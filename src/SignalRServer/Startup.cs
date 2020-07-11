@@ -34,7 +34,8 @@ namespace SignalRServer
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials()
-                .WithOrigins("http://localhost:8000");
+                .SetIsOriginAllowed(origin => true);
+                //.WithOrigins("http://localhost:8000");
             }));
 
             // 注入 SignalR 服务
@@ -42,6 +43,11 @@ namespace SignalRServer
             {
                 // 是否向客户端发送详细的错误消息。详细的错误消息包括来自服务器上引发异常的详细信息。
                 config.EnableDetailedErrors = true;
+                // 客户端如果在30s内没有向服务器发送任何消息，那么服务器端则会认为客户端已经断开连接了，建议值为 KeepAliveInterval 值的两倍 
+                config.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+                // 服务器未在15s内向客户端发送消息，在15s的时候服务器会自动ping客户端，保持连接打开的状态
+                config.KeepAliveInterval = TimeSpan.FromSeconds(15);
+
             });
 
             /*-------------------MessagePack 协议-----------------------*/

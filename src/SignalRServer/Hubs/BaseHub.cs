@@ -15,7 +15,7 @@ namespace SignalRServer.Hubs
     /// <summary>
     /// 基础消息处理
     /// </summary>
-    public partial class ChatHub : Hub
+    public partial class ChatHub : Hub<ISignalrClient>
     {
         private readonly ConnectionCounter _counter;
 
@@ -66,7 +66,8 @@ namespace SignalRServer.Hubs
             }
 
             // 应答注册成功
-            await Clients.Caller.SendAsync(EventType.RegisterSuccess, clientSummary);
+            //await Clients.Caller.SendAsync(EventType.RegisterSuccess, clientSummary);
+            await Clients.Caller.RegisterSuccess(clientSummary);
         }
 
         /// <summary>
@@ -104,7 +105,8 @@ namespace SignalRServer.Hubs
             await Groups.AddToGroupAsync(Context.ConnectionId, clientSummary.TeacherCode);
 
             // 通知教师机
-            await Clients.Client(teacher.ConnectionId).SendAsync(EventType.ReceiveMessage, CommandType.StudentConnected, clientSummary);
+            //await Clients.Client(teacher.ConnectionId).SendAsync(EventType.ReceiveMessage, CommandType.StudentConnected, clientSummary);
+            await Clients.Client(teacher.ConnectionId).ReceiveMessage(CommandType.StudentConnected, clientSummary);
         }
 
 

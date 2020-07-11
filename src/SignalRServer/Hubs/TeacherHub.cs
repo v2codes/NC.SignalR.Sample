@@ -10,35 +10,8 @@ namespace SignalRServer.Hubs
     /// <summary>
     /// 教师指令hub
     /// </summary>
-    public partial class ChatHub : Hub
+    public partial class ChatHub : Hub<ISignalrClient>
     {
-        /// <summary>
-        /// 开始考试
-        /// </summary>
-        /// <returns></returns>
-        public async Task Start(string teacherCode)
-        {
-            _counter.Receive(teacherCode);
-            await Clients.Group(teacherCode).SendAsync(EventType.Start,CommandType.Start, teacherCode);
-        }
-
-        /// <summary>
-        /// 暂停考试
-        /// </summary>
-        /// <returns></returns>
-        public async Task Pause(string teacherCode)
-        {
-            await Clients.Group(teacherCode).SendToReceiveMessage(CommandType.Pause, teacherCode);
-        }
-
-        /// <summary>
-        /// 结束考试
-        /// </summary>
-        /// <returns></returns>
-        public async Task Stop(string teacherCode)
-        {
-            await Clients.Group(teacherCode).SendToReceiveMessage(CommandType.Stop, teacherCode);
-        }
 
         ///// <summary>
         ///// 接受客户端消息
@@ -73,12 +46,14 @@ namespace SignalRServer.Hubs
 
         private async Task SendToPart(string commandType, List<string> connectionIds)
         {
-            await Clients.Clients(connectionIds).SendAsync("ReceiveMessage", commandType);
+            //await Clients.Clients(connectionIds).SendAsync("ReceiveMessage", commandType);
+            await Clients.Clients(connectionIds).ReceiveMessage(commandType, null);
         }
 
         private async Task SendToUser(string commandType, string connectionId)
         {
-            await Clients.Client(connectionId).SendAsync(EventType.ReceiveMessage, commandType);
+            //await Clients.Client(connectionId).SendAsync(EventType.ReceiveMessage, commandType);
+            await Clients.Client(connectionId).ReceiveMessage(commandType, null);
         }
 
 

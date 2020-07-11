@@ -42,5 +42,5 @@ Attempt to make 5,000 connections to the `echo` hub using Long Polling
 
 ```
 dotnet run -- local --target-url https://localhost:5001/echo --connections 5000 --transport LongPolling
-dotnet run -- local --target-url http://localhost:5000/hubs/chatHub --connections 100
+ dotnet run -- local --target-url http://10.17.9.30:5000/signalr --connections 100
 ```

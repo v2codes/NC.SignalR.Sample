@@ -6,19 +6,22 @@ using System.Threading.Tasks;
 
 namespace SignalRServer.Models
 {
-    public static class ClientProxyExtensions
+    /// <summary>
+    /// IClientProxy扩展方法
+    /// </summary>
+    public static class IClientProxyExtensions
     {
         /// <summary>
         /// 扩展方法
         /// 发送 ReceiveMessage 事件消息
         /// </summary>
-        /// <param name="Clients"></param>
+        /// <param name="clients"></param>
         /// <param name="commandType"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static async Task SendToReceiveMessage(this IClientProxy Clients, string commandType, object data)
+        public static async Task SendToReceiveMessage(this IClientProxy clients, string commandType, object data)
         {
-            await Clients.SendAsync(EventType.ReceiveMessage, commandType, data);
+            await clients.SendAsync(EventType.ReceiveMessage, commandType, data);
         }
 
         /// <summary>

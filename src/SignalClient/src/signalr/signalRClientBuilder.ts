@@ -1,101 +1,6 @@
-import { HubConnection, HubConnectionBuilder, HttpTransportType } from '@microsoft/signalr';
-
-/**
- * SignalR 客户端配置选项
- */
-export interface ISignalRClientOptions {
-    /**
-     * signalR 服务器地址
-     */
-    serverAddress?: string,
-
-    /**
-     * 超时时间，默认5000毫秒
-     */
-    timeout?: number,
-
-    /**
-     * 开启日志
-     */
-    logging?: boolean,
-}
-
-
-/**
- * 角色类型
- */
-export enum IdentityType {
-    /**
-     * 教师机
-     */
-    Teacher = 'Teacher',
-
-    /**
-     * 学生机
-     */
-    Student = 'Student'
-}
-
-/**
- * 可注册消息类型，对应后端接收消息方法名
- */
-export enum EventType {
-    /**
-     * 注册教师机 & 学生机
-     */
-    Register = 'Register',
-
-    /**
-     * 注册成功通知消息类型
-     */
-    RegisterSuccess = 'RegisterSuccess',
-
-    /**
-     * 接收消息类型
-     */
-    ReceiveMessage = 'ReceiveMessage',
-
-    /**
-     * 发送消息类型
-     */
-    SendMessage = 'SendMessage',
-
-    /**
-     * 服务端异常消息通知
-     */
-    ServerErrorMessage = 'ServerErrorMessage',
-
-    /**
-     * 开始考试消息类型
-     */
-    Start = 'Start'
-}
-
-/**
- * 指令类型，教师机&学生机交互
- */
-export enum CommandType {
-
-    /**
-     * 注册成功
-     */
-    RegisterSuccess = 'RegisterSuccess',
-
-    /**
-     * 学生机加入
-     */
-    StudentConnected = 'StudentConnected',
-
-    /**
-     * 开始考试
-     */
-    Start = 'Start',
-
-    /**
-     * 结束考试
-     */
-    Stop = 'Stop'
-}
+import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
+import { ISignalRClientOptions } from './ISignalRClientOptions';
+import { IdentityType, EventType, CommandType } from './commands';
 
 /**
  * SignalR 客户端工具类
@@ -108,16 +13,19 @@ export class SignalRClientBuilder {
     public readonly connectionId?: string;// 当前连接ID
 
     // 注册成功回调
-    private onRegistedSuccess?: (...args: any[]) => void;
+    private onRegistedSuccessCallback?: (...args: any[]) => void;
 
     // 接受消息回调
-    private onReceivedMessage?: (commandType: CommandType, ...args: any[]) => void;
+    private onReceivedCallback?: (commandType: CommandType, ...args: any[]) => void;
 
-    // 接受消息回调
-    private onStart?: (commandType: CommandType, ...args: any[]) => void;
+    // 重新连接成功回调
+    private onReconnectedCallback?: (connectionId: string | undefined) => void;
+
+    // 连接关闭回调
+    private onCloseCallback?: (error?: Error | undefined) => void;
 
     // 服务端异常消息回调
-    private onServerError?: (...args: []) => void;
+    private onErrorCallback?: (...args: []) => void;
 
 
     constructor(options?: ISignalRClientOptions) {
@@ -125,65 +33,98 @@ export class SignalRClientBuilder {
         this.timeout = options && options.timeout || 3000;
 
         // 初始化 signalR 客户端 && 注册成功通知消息处理 && 接收消息处理
-        this.client = this.initSignalRClient();
+        this.client = this.initClient();
     }
 
     /**
      * 初始化 signalR 客户端
-     * @param serverUrl 服务器
      */
-    private initSignalRClient = (): HubConnection => {
+    private initClient = (): HubConnection => {
         // 配置连接
+        // 重连机制
+        //    启用重连机制，指掉线的瞬间马上重连，默认重连4次，分别时间间隔为：0、2、10和30秒
+        //    建立连接后，断网后，进行消息传递会进入 onreconnecting 回调
+        //    第一次，立即进入重连 0；第二次，2s后重连；第三次，10s后重连；第四次，30s后重连
+        //    网络恢复后的一次重连会是失败的，需要到下一次重连才可以重连成功。如果一直断网，4次重连全部失败，则会进入onclose回调。
         const builder = new HubConnectionBuilder()
             .withUrl(this.serverAddress) // , HttpTransportType.WebSockets)
+            .withAutomaticReconnect() // 启用重连机制
             .build();
+
+        // 客户端如果在30s内未收到服务器端发送的消息，客户端会断开连接，进入onclose事件
+        builder.serverTimeoutInMilliseconds = 30000;
+        // 如果客户端在15s内没有发送任何消息，则15s的时候客户端会自动ping一下服务器端，从而告诉服务器端，我在线
+        builder.keepAliveIntervalInMilliseconds = 15000;
 
         // 注册成功通知消息处理 //TODO 返回参数？？？ onRegistedSuccess
         builder.on(EventType.RegisterSuccess, (...args: any[]) => {
-            if (this.onRegistedSuccess) {
-                this.onRegistedSuccess('RegisterSuccess', ...args);
+            if (this.onRegistedSuccessCallback) {
+                this.onRegistedSuccessCallback('RegisterSuccess', ...args);
             }
         });
 
         // 接收消息处理
         builder.on(EventType.ReceiveMessage, (commandType: CommandType, ...args: any[]): void => {
-            if (this.onReceivedMessage) {
-                this.onReceivedMessage(commandType, ...args);
+            if (this.onReceivedCallback) {
+                this.onReceivedCallback(commandType, ...args);
             }
         });
 
         // 服务端异常消息处理
         builder.on(EventType.ServerErrorMessage, (...args: []) => {
-            if (this.onServerError) {
-                this.onServerError(...args);
+            if (this.onErrorCallback) {
+                this.onErrorCallback(...args);
             }
         });
 
-        // 连接关闭事件
-        builder.onclose((error)=>{
-            console.log('onclose', error)
-        });
-        
-        // 断开重连
-        builder.onreconnecting(error=>{
+        /* 重连机制 */
+        // 重连机制开始前出发，仅执行一次
+        builder.onreconnecting(error => {
             console.log('onreconnecting', error)
         });
 
-        // 断开重连
-        builder.onreconnected(connectionId=>{
-            console.log('onreconnected', connectionId)
-        });
-
-        // 开始考试
-        builder.on(EventType.Start, (commandType: CommandType, ...args: any[]): void => {
-            if (this.onStart) {
-                this.onStart(commandType, ...args);
+        // 重连成功，任何一次重连成功后执行
+        builder.onreconnected(connectionId => {
+            console.log('onreconnected', connectionId);
+            if (this.onReconnectedCallback) {
+                this.onReconnectedCallback(connectionId);
             }
         });
 
-
+        // 连接关闭事件，默认4次重连失败后，调用关闭连接
+        builder.onclose((error) => {
+            console.log('onclose', error);
+            if (this.onCloseCallback) {
+                this.onCloseCallback(error);
+            }
+        });
 
         return builder;
+    }
+
+    /**
+     * 打开连接
+     */
+    public connect = async (): Promise<void> => {
+        if (this.client) {
+            try {
+                await this.client.start();
+            } catch (error) {
+                throw error;
+            }
+        } else {
+            throw "signalr init failed.";
+        }
+    }
+
+    /**
+     * 当前SignalR客户端 是否连接中
+     */
+    public isConnected = (): boolean => {
+        if (this.client && this.client.state === 'Connected') {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -220,7 +161,7 @@ export class SignalRClientBuilder {
      * @param callback 
      */
     public onRegisted = (callback: (...args: any[]) => void): void => {
-        this.onRegistedSuccess = callback;
+        this.onRegistedSuccessCallback = callback;
     }
 
     /**
@@ -228,26 +169,32 @@ export class SignalRClientBuilder {
      * @param callback 
      */
     public onReceived = (callback: (commandType: CommandType, ...args: any[]) => void): void => {
-        this.onReceivedMessage = callback;
+        this.onReceivedCallback = callback;
     }
 
     /**
-     * 注册服务端异常消息回调
+     * 服务端异常消息回调
      * @param callback 
      */
     public onError = (callback: (...args: any[]) => void): void => {
-        this.onServerError = callback;
+        this.onErrorCallback = callback;
     }
 
-    // // 接收消息处理
-    // public on = (methodName: string, callback: (commandType: CommandType, ...args: any[]) => void) => {
-    //     this.client.on(methodName, callback);
-    // }
+    /**
+     * 重新连接成功回调
+     * @param callback 
+     */
+    public onReconnected = (callback: (connectionId?: string) => void): void => {
+        this.onReconnectedCallback = callback;
+    }
 
-    // public onStarted = (callback: (commandType: CommandType, ...args: any[]) => void): void => {
-    //     this.onStart = callback;
-    // }
-
+    /**
+     * 连接关闭回调
+     * @param callback 
+     */
+    public onClose = (callback: (error?: Error) => void): void => {
+        this.onCloseCallback = callback;
+    }
 
     /**
      * 发送 SendMessage 类型消息
@@ -256,24 +203,8 @@ export class SignalRClientBuilder {
     public sendMessage = async (commandType: CommandType, ...args: any[]): Promise<void> => {
         if (this.isConnected()) {
             await this.client.send(commandType, ...args);
-            // await this.client.send(EventType.SendMessage, commandType, ...args);
         } else {
             console.log('signalr init failed or disconnected.');
-        }
-    }
-
-    /**
-     * 打开连接
-     */
-    public connect = async (): Promise<void> => {
-        if (this.client) {
-            try {
-                await this.client.start();
-            } catch (error) {
-                throw error;
-            }
-        } else {
-            throw "signalr init failed.";
         }
     }
 
@@ -289,39 +220,6 @@ export class SignalRClientBuilder {
             console.log('signalr init failed or disconnected.');
         }
     }
-
-    //#region 打开连接/接收消息回调/重新连接回调/连接关闭回调
-    /**
-     * 重新连接回调
-     */
-    public onReconnecting = (callback: (error?: Error) => void): void => {
-        this.client.onreconnecting(callback);
-    }
-
-    /**
-     * 重新连接成功
-     */
-    public onReconnected = (callback: (connectionId?: string) => void): void => {
-        this.client.onreconnected(callback);
-    }
-
-    /**
-     * 连接关闭回调
-     */
-    public onClose = (callback: (error?: Error) => void): void => {
-        this.client.onclose(callback)
-    }
-
-    /**
-     * 当前SignalR客户端 是否连接中
-     */
-    public isConnected = (): boolean => {
-        if (this.client && this.client.state === 'Connected') {
-            return true;
-        }
-        return false;
-    }
-    //#endregion
 }
 
 /**
@@ -333,13 +231,6 @@ export function getSignalRClient(options?: ISignalRClientOptions): SignalRClient
         return window.SignalRClient;
     } else {
         const client = new SignalRClientBuilder(options);
-        // 打开连接
-        // client.start().then(() => {
-        //     console.log('signalr: server connected!')
-        // }).catch(err => {
-        //     throw err;
-        // });
-
         // 全局保存客户端对象
         window.SignalRClient = client;
         return client;

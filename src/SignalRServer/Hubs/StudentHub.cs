@@ -10,7 +10,7 @@ namespace SignalRServer.Hubs
     /// <summary>
     /// 学生指令hub
     /// </summary>
-    public partial class ChatHub : Hub
+    public partial class ChatHub : Hub<ISignalrClient>
     {
         /// <summary>
         /// 状态上报
@@ -18,7 +18,8 @@ namespace SignalRServer.Hubs
         /// <returns></returns>
         public async Task Status(string teacherCode)
         {
-            await Clients.Client(teacherCode).SendToReceiveMessage(CommandType.Status, Context.ConnectionId);
+            //await Clients.Client(teacherCode).SendToReceiveMessage(CommandType.Status, Context.ConnectionId);
+            await Clients.Client(teacherCode).ReceiveMessage(CommandType.Status, Context.ConnectionId);
         }
     }
 }
