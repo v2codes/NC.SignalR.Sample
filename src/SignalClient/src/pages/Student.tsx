@@ -23,13 +23,17 @@ export default () => {
       // 接收消息回调
       client.onReceived(onReceive);
 
-      // client.onStarted(onStart);
+      // 消息发出后，超时未收到反馈通知
+      client.onTimeout(onTimeout);
+
+      // 连接关闭
+      client.onClose(onClose);
 
       client
         .connect()
         .then(() => {
           // 注册客户端 - 学生机
-          client.registerStudent(StudentCode, TeacherCode, `学生机 ${StudentCode} 注册`);
+          client.registerStudent(TeacherCode, `学生机 ${StudentCode} 注册`);
         })
         .catch(e => {
           alert(e);
@@ -39,10 +43,10 @@ export default () => {
 
   // 注册成功回调通知
   const onRegisterSuccess = useCallback(
-    (commandType, regInfo) => {
+    clientInfo => {
       receiveMessages.push({
-        eventCommand: commandType,
-        data: JSON.stringify(regInfo),
+        eventCommand: 'RegisterSuccess',
+        data: JSON.stringify(clientInfo),
       });
       setReceiveMessages([...receiveMessages]);
     },
@@ -61,21 +65,30 @@ export default () => {
     [receiveMessages],
   );
 
-  // 收到消息
-  const onStart = useCallback(
-    (commandType: CommandType, data: any) => {
+  // 消息发出后，超时未收到反馈通知
+  const onTimeout = useCallback(
+    (messageSummary: any) => {
       receiveMessages.push({
-        eventCommand: commandType,
-        data: JSON.stringify(data),
+        eventCommand: 'Timeout',
+        data: JSON.parse(messageSummary),
       });
       setReceiveMessages([...receiveMessages]);
     },
     [receiveMessages],
   );
 
+  // 连接关闭
+  const onClose = useCallback((error?: Error) => {
+    receiveMessages.push({
+      eventCommand: 'onClose',
+      data: JSON.stringify(error),
+    });
+    setReceiveMessages([...receiveMessages]);
+  }, []);
+
   // 发送按钮事件
   const onBtnSendClick = async (): Promise<void> => {
-    await window.SignalRClient?.sendMessage('Student', 'Teacher001');
+    await window.SignalRClient?.sendMessage(CommandType.Status, { TeacherCode });
   };
 
   return (

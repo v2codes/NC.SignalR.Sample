@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Input, Button, Divider } from 'antd';
 import { Link } from 'umi';
-import { getSignalRClient, CommandType } from '@/signalr';
+import { getSignalRClient, CommandType, IReceiveData } from '@/signalr';
 import styles from './index.less';
 
 const TeacherCode = 'Teacher001';
@@ -19,7 +19,7 @@ export default () => {
 
   // 收到消息
   const onReceive = useCallback(
-    (commandType: CommandType, data: string) => {
+    (commandType: CommandType, data: IReceiveData) => {
       receiveMessages.push({
         eventCommand: commandType,
         data: JSON.stringify(data),

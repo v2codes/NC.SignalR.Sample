@@ -2,22 +2,23 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
-namespace SignalRServer.Models
+namespace SignalRServer.Feedback
 {
     /// <summary>
-    /// 消息历史
-    /// TODO：持久化
+    /// 消息记录
+    /// @Created by Leo 2020/7/13 18:06:13
     /// </summary>
     public class MessageHistory
     {
         /// <summary>
         /// 消息记录
         /// </summary>
-        public static ConcurrentBag<MessageSummary> MessageRecords { get; private set; }
+        public ConcurrentBag<MessageSummary> MessageRecords { get; private set; }
 
-        static MessageHistory()
+        public MessageHistory()
         {
             MessageRecords = new ConcurrentBag<MessageSummary>();
         }
@@ -30,7 +31,7 @@ namespace SignalRServer.Models
         /// <param name="sender"></param>
         /// <param name="receivers"></param>
         /// <param name="data"></param>
-        public static MessageSummary SaveMessage(string sender, List<ReceiverSummary> receivers, string eventType, string commandType, object data)
+        public MessageSummary SaveMessage(string sender, List<MessageReceiver> receivers, string eventType, string commandType, object data)
         {
             var message = new MessageSummary()
             {
@@ -42,7 +43,6 @@ namespace SignalRServer.Models
             };
 
             MessageRecords.Add(message);
-
             return message;
         }
 
@@ -52,11 +52,11 @@ namespace SignalRServer.Models
         /// <param name="messageId"></param>
         /// <param name="receiverConnectionId"></param>
         /// <returns></returns>
-        public static async Task Feedback(Guid messageId, string receiverConnectionId)
+        public async Task Feedback(Guid messageId, string receiverConnectionId)
         {
             await Task.Run(() =>
             {
-                var message = MessageRecords.FirstOrDefault(p => p.MessageId == messageId);
+                var message = MessageRecords.FirstOrDefault(p => p.Id == messageId);
                 if (message == null)
                 {
                     throw new Exception($"未找到消息记录：[id={messageId}]");
@@ -73,7 +73,7 @@ namespace SignalRServer.Models
                 var noFeedback = message.Receivers.Any(p => p.State != true);
                 if (!noFeedback)
                 {
-                    message.State = true;
+                    message.FeedbackState = true;
                 }
                 message.FeedbackTime = DateTime.Now;
             });

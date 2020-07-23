@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Text;
 
 namespace SignalRServer.Dtos
 {
-
     /// <summary>
     /// 注册信息
+    /// @Created by Leo 2020/7/13 17:47:58
     /// </summary>
-    public class RegisterInfo
+    public class RegisterCmdParams
     {
         /// <summary>
         /// 角色类型：Teacher、Student
@@ -20,15 +19,5 @@ namespace SignalRServer.Dtos
         /// 教师机Code
         /// </summary>
         public string TeacherCode { get; set; }
-
-        /// <summary>
-        /// 当前用户 Code
-        /// </summary>
-        public string Code { get; set; }
-
-        /// <summary>
-        /// 其他数据
-        /// </summary>
-        public object Data { get; set; }
     }
 }

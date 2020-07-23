@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using Autofac;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -11,7 +13,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SignalRServer.Benchmark;
+using SignalRServer.Feedback;
+using SignalRServer.Handlers;
 using SignalRServer.Hubs;
+using SignalRServer.Models;
+using SignalRServer.Storage;
 
 namespace SignalRServer
 {
@@ -79,8 +85,11 @@ namespace SignalRServer
             ////}
             //);
 
-            services.AddSingleton<ConnectionCounter>();
+            // 注入请求统计后台服务
             services.AddHostedService<HostedCounterService>();
+
+            // 注入消息反馈监听服务
+            services.AddHostedService<FeedbackMonitorService>();
 
             services.AddControllers();
         }
@@ -104,8 +113,47 @@ namespace SignalRServer
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapHub<ChatHub>("/signalr");
+                endpoints.MapHub<ProxyHub>("/signalr");
                 endpoints.MapControllers();
+            });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="builder"></param>
+        public void ConfigureContainer(ContainerBuilder builder)
+        {
+            builder.RegisterModule(new AutofacModele());
+        }
+    }
+
+    public class AutofacModele : Autofac.Module
+    {
+        protected override void Load(ContainerBuilder builder)
+        {
+            // 客户端信息存储 -- 临时
+            //context.Services.AddSingleton<ConnectionCounter>();
+            builder.RegisterType<ConnectionCounter>().SingleInstance();
+
+            // 客户端信息存储 -- 临时
+            //context.Services.AddSingleton<ClientStorage>(); 
+            builder.RegisterType<ClientStorage>().SingleInstance();
+
+            // 消息历史记录
+            //context.Services.AddSingleton<MessageHistory>();
+            builder.RegisterType<MessageHistory>().SingleInstance();
+
+            // 批量注入命令处理函数
+            var assembly = Assembly.GetExecutingAssembly();
+            var handlers = assembly.GetTypes().Where(p => p.IsClass && typeof(ICommandHandler).IsAssignableFrom(p)).ToList();
+            handlers.ForEach(t =>
+            {
+                var att = t.GetCustomAttribute<InjectNamedAttribute>();
+                if (att != null)
+                {
+                    builder.RegisterType(t).Named<ICommandHandler>(att.Named).InstancePerLifetimeScope();
+                }
             });
         }
     }
